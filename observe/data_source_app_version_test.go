@@ -1,6 +1,7 @@
 package observe
 
 import (
+	"os"
 	"regexp"
 	"testing"
 
@@ -28,6 +29,10 @@ func TestAccObserveDataAppVersion_Simple(t *testing.T) {
 }
 
 func TestAccObserveDataAppVersion_Prerelease(t *testing.T) {
+	if os.Getenv("CI") != "true" {
+		t.Skip("CI != true. This test requires REGISTRY_INCLUDE_PRERELEASES which is only set in CI env.")
+	}
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
