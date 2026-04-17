@@ -72,7 +72,7 @@ func resourceMonitorActionAttachment() *schema.Resource {
 
 func newMonitorActionAttachmentConfig(data *schema.ResourceData, wsid string) (input *gql.MonitorActionAttachmentInput, diags diag.Diagnostics) {
 	input = &gql.MonitorActionAttachmentInput{
-		WorkspaceId: wsid,
+		WorkspaceId: &wsid,
 		MonitorID:   data.Get("monitor").(string),
 		ActionID:    data.Get("action").(string),
 	}

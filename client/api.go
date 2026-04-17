@@ -876,7 +876,7 @@ func (c *Client) CreateWorksheet(ctx context.Context, workspaceId string, input 
 		c.obs2110.Lock()
 		defer c.obs2110.Unlock()
 	}
-	input.WorkspaceId = workspaceId
+	input.WorkspaceId = &workspaceId
 	if c.Config.ManagingObjectID != nil {
 		input.ManagedById = c.Config.ManagingObjectID
 	}
@@ -903,7 +903,7 @@ func (c *Client) UpdateWorksheet(ctx context.Context, id string, workspaceId str
 		defer c.obs2110.Unlock()
 	}
 	input.Id = &id
-	input.WorkspaceId = workspaceId
+	input.WorkspaceId = &workspaceId
 
 	if c.Config.ManagingObjectID != nil {
 		input.ManagedById = c.Config.ManagingObjectID
