@@ -1096,7 +1096,7 @@ type DashboardLinkInput struct {
 	Name        *string `json:"name"`
 	Description *string `json:"description"`
 	IconUrl     *string `json:"iconUrl"`
-	WorkspaceId string  `json:"workspaceId"`
+	WorkspaceId *string `json:"workspaceId"`
 	ManagedById *string `json:"managedById"`
 	// If folder is empty on create, it will be put in the default folder. If folder
 	// is empty on update, the existing folder won't be changed.
@@ -1120,7 +1120,7 @@ func (v *DashboardLinkInput) GetDescription() *string { return v.Description }
 func (v *DashboardLinkInput) GetIconUrl() *string { return v.IconUrl }
 
 // GetWorkspaceId returns DashboardLinkInput.WorkspaceId, and is useful for accessing the field via an interface.
-func (v *DashboardLinkInput) GetWorkspaceId() string { return v.WorkspaceId }
+func (v *DashboardLinkInput) GetWorkspaceId() *string { return v.WorkspaceId }
 
 // GetManagedById returns DashboardLinkInput.ManagedById, and is useful for accessing the field via an interface.
 func (v *DashboardLinkInput) GetManagedById() *string { return v.ManagedById }
@@ -1602,8 +1602,11 @@ type DatasetInput struct {
 	IconUrl                    *string                     `json:"iconUrl"`
 	Layout                     *types.JsonObject           `json:"layout"`
 	PathCost                   *types.Int64Scalar          `json:"pathCost"`
-	DataTableViewState         *types.JsonObject           `json:"dataTableViewState"`
-	StorageIntegrationId       *string                     `json:"storageIntegrationId"`
+	// Disables freshness decay for this dataset. When true, the dataset's freshness
+	// goal will not be automatically increased based on query activity.
+	FreshnessDecayDisabled *bool             `json:"freshnessDecayDisabled"`
+	DataTableViewState     *types.JsonObject `json:"dataTableViewState"`
+	StorageIntegrationId   *string           `json:"storageIntegrationId"`
 	// Max on-demand materialization length for the dataset (in nanoseconds). If not set
 	// will use the default value in transformer config.
 	OnDemandMaterializationLength *types.Int64Scalar `json:"onDemandMaterializationLength"`
@@ -1613,9 +1616,17 @@ type DatasetInput struct {
 	SharingRules []DatasetSharingRuleInput `json:"sharingRules"`
 	// Entity tags for organizing and categorizing datasets.
 	EntityTags []EntityTagMappingInput `json:"entityTags"`
-	// Defines the data retention period of the dataset. We will currently only persist this field but
-	// it wouldn't take effect. TODO: Also apply it to the data retention manager.
-	DataRetentionPeriod *types.DurationScalar `json:"dataRetentionPeriod"`
+	// Defines the data retention of the dataset, in days. This will be applied to this dataset only
+	// and it will not affect any upstream or downstream datasets. Notice that using a bigger value than the upstream,
+	// means that not the full range is available in case of rematerialization.
+	//
+	// A value of 0 means that data retention is disabled for this dataset.
+	//
+	// For root level datasets, if this value is not set, the dataset will inherit the value from the datastream or
+	// customer wide data retention period, which is configured via a layered setting (DataRetention.periodDays).
+	// For downstream datasets, if this value is not set, the dataset will inherit the value from the minimum value
+	// of all upstream datasets.
+	DataRetentionDays *types.Int64Scalar `json:"dataRetentionDays"`
 	// The type of dataset definition. Used to specify special dataset types like log derived metrics.
 	DatasetDefinitionType *DatasetDefinitionType `json:"datasetDefinitionType"`
 }
@@ -1664,6 +1675,9 @@ func (v *DatasetInput) GetLayout() *types.JsonObject { return v.Layout }
 // GetPathCost returns DatasetInput.PathCost, and is useful for accessing the field via an interface.
 func (v *DatasetInput) GetPathCost() *types.Int64Scalar { return v.PathCost }
 
+// GetFreshnessDecayDisabled returns DatasetInput.FreshnessDecayDisabled, and is useful for accessing the field via an interface.
+func (v *DatasetInput) GetFreshnessDecayDisabled() *bool { return v.FreshnessDecayDisabled }
+
 // GetDataTableViewState returns DatasetInput.DataTableViewState, and is useful for accessing the field via an interface.
 func (v *DatasetInput) GetDataTableViewState() *types.JsonObject { return v.DataTableViewState }
 
@@ -1684,8 +1698,8 @@ func (v *DatasetInput) GetSharingRules() []DatasetSharingRuleInput { return v.Sh
 // GetEntityTags returns DatasetInput.EntityTags, and is useful for accessing the field via an interface.
 func (v *DatasetInput) GetEntityTags() []EntityTagMappingInput { return v.EntityTags }
 
-// GetDataRetentionPeriod returns DatasetInput.DataRetentionPeriod, and is useful for accessing the field via an interface.
-func (v *DatasetInput) GetDataRetentionPeriod() *types.DurationScalar { return v.DataRetentionPeriod }
+// GetDataRetentionDays returns DatasetInput.DataRetentionDays, and is useful for accessing the field via an interface.
+func (v *DatasetInput) GetDataRetentionDays() *types.Int64Scalar { return v.DataRetentionDays }
 
 // GetDatasetDefinitionType returns DatasetInput.DatasetDefinitionType, and is useful for accessing the field via an interface.
 func (v *DatasetInput) GetDatasetDefinitionType() *DatasetDefinitionType {
@@ -5402,7 +5416,7 @@ type MonitorActionAttachmentInput struct {
 	MonitorID   string  `json:"monitorID"`
 	ActionID    string  `json:"actionID"`
 	ChannelID   *string `json:"channelID"`
-	WorkspaceId string  `json:"workspaceId"`
+	WorkspaceId *string `json:"workspaceId"`
 	Name        *string `json:"name"`
 	IconUrl     *string `json:"iconUrl"`
 	Description *string `json:"description"`
@@ -5420,7 +5434,7 @@ func (v *MonitorActionAttachmentInput) GetActionID() string { return v.ActionID 
 func (v *MonitorActionAttachmentInput) GetChannelID() *string { return v.ChannelID }
 
 // GetWorkspaceId returns MonitorActionAttachmentInput.WorkspaceId, and is useful for accessing the field via an interface.
-func (v *MonitorActionAttachmentInput) GetWorkspaceId() string { return v.WorkspaceId }
+func (v *MonitorActionAttachmentInput) GetWorkspaceId() *string { return v.WorkspaceId }
 
 // GetName returns MonitorActionAttachmentInput.Name, and is useful for accessing the field via an interface.
 func (v *MonitorActionAttachmentInput) GetName() *string { return v.Name }
@@ -5518,7 +5532,7 @@ type MonitorActionInput struct {
 	IsPrivate        bool                  `json:"isPrivate"`
 	Email            *EmailActionInput     `json:"email"`
 	Webhook          *WebhookActionInput   `json:"webhook"`
-	WorkspaceId      string                `json:"workspaceId"`
+	WorkspaceId      *string               `json:"workspaceId"`
 	Name             string                `json:"name"`
 	IconUrl          *string               `json:"iconUrl"`
 	Description      *string               `json:"description"`
@@ -5545,7 +5559,7 @@ func (v *MonitorActionInput) GetEmail() *EmailActionInput { return v.Email }
 func (v *MonitorActionInput) GetWebhook() *WebhookActionInput { return v.Webhook }
 
 // GetWorkspaceId returns MonitorActionInput.WorkspaceId, and is useful for accessing the field via an interface.
-func (v *MonitorActionInput) GetWorkspaceId() string { return v.WorkspaceId }
+func (v *MonitorActionInput) GetWorkspaceId() *string { return v.WorkspaceId }
 
 // GetName returns MonitorActionInput.Name, and is useful for accessing the field via an interface.
 func (v *MonitorActionInput) GetName() string { return v.Name }
@@ -6744,6 +6758,14 @@ const (
 	MonitorV2ActionTypeWebhook   MonitorV2ActionType = "Webhook"
 )
 
+// Controls whether AI SRE automatically triages alerts for a monitor.
+type MonitorV2AiTriagingMode string
+
+const (
+	MonitorV2AiTriagingModeNone   MonitorV2AiTriagingMode = "None"
+	MonitorV2AiTriagingModeTriage MonitorV2AiTriagingMode = "Triage"
+)
+
 // MonitorV2AlarmLevel presents the severity level a user can choose for their monitor.
 // The NoData severity is a special placeholder for the no data rule.
 type MonitorV2AlarmLevel string
@@ -7345,6 +7367,7 @@ type MonitorV2Input struct {
 	Definition        MonitorV2DefinitionInput         `json:"definition"`
 	RuleKind          MonitorV2RuleKind                `json:"ruleKind"`
 	InvestigationInfo *MonitorV2InvestigationInfoInput `json:"investigationInfo"`
+	AiTriagingMode    *MonitorV2AiTriagingMode         `json:"aiTriagingMode"`
 	Name              string                           `json:"name"`
 	IconUrl           *string                          `json:"iconUrl,omitempty"`
 	Description       *string                          `json:"description,omitempty"`
@@ -7371,6 +7394,9 @@ func (v *MonitorV2Input) GetRuleKind() MonitorV2RuleKind { return v.RuleKind }
 func (v *MonitorV2Input) GetInvestigationInfo() *MonitorV2InvestigationInfoInput {
 	return v.InvestigationInfo
 }
+
+// GetAiTriagingMode returns MonitorV2Input.AiTriagingMode, and is useful for accessing the field via an interface.
+func (v *MonitorV2Input) GetAiTriagingMode() *MonitorV2AiTriagingMode { return v.AiTriagingMode }
 
 // GetName returns MonitorV2Input.Name, and is useful for accessing the field via an interface.
 func (v *MonitorV2Input) GetName() string { return v.Name }
@@ -8184,13 +8210,15 @@ const (
 type ORType string
 
 const (
-	ORTypeCustomer       ORType = "Customer"
-	ORTypeDashboard      ORType = "Dashboard"
-	ORTypeDataset        ORType = "Dataset"
-	ORTypeDatastream     ORType = "Datastream"
-	ORTypeMonitor        ORType = "Monitor"
-	ORTypeReferencetable ORType = "Referencetable"
-	ORTypeWorksheet      ORType = "Worksheet"
+	ORTypeAichat             ORType = "Aichat"
+	ORTypeCustomer           ORType = "Customer"
+	ORTypeDashboard          ORType = "Dashboard"
+	ORTypeDataset            ORType = "Dataset"
+	ORTypeDatastream         ORType = "Datastream"
+	ORTypeMonitor            ORType = "Monitor"
+	ORTypeReferencetable     ORType = "Referencetable"
+	ORTypeStorageintegration ORType = "Storageintegration"
+	ORTypeWorksheet          ORType = "Worksheet"
 )
 
 // At some point in the future, we may have Segments as business objects,
@@ -8285,6 +8313,22 @@ func (v *ParameterSpecInput) GetDefaultValue() *types.Value { return v.DefaultVa
 
 // GetValueKind returns ParameterSpecInput.ValueKind, and is useful for accessing the field via an interface.
 func (v *ParameterSpecInput) GetValueKind() ValueTypeSpecInput { return v.ValueKind }
+
+// Validation modes that can be applied to a pipeline during compilation.
+// Multiple validators can be specified and all errors are collected.
+type PipelineValidationMode string
+
+const (
+	// Validates that the pipeline is valid for use as a Dataset Query Filter.
+	// Produces errors if non-filter verbs (make_col, aggregate, etc.) or link
+	// references (e.g., label(^"Parent Container")) are found.
+	PipelineValidationModeDatasetQueryFilter PipelineValidationMode = "DATASET_QUERY_FILTER"
+	// Validates that the pipeline produces insert-only output.
+	// Produces errors if verbs that break insert-only behavior (aggregate, sort,
+	// timechart, etc.) are found. Used for validating shaping pipelines in
+	// features like Log Derived Metrics.
+	PipelineValidationModeInsertOnly PipelineValidationMode = "INSERT_ONLY"
+)
 
 // Poller includes the GraphQL fields of Poller requested by the fragment Poller.
 type Poller struct {
@@ -10011,6 +10055,10 @@ const (
 	RbacRoleReferencetablecreator     RbacRole = "ReferenceTableCreator"
 	RbacRoleReportmanager             RbacRole = "ReportManager"
 	RbacRoleServiceaccountcreator     RbacRole = "ServiceAccountCreator"
+	RbacRoleShareinmanager            RbacRole = "ShareInManager"
+	RbacRoleShareinviewer             RbacRole = "ShareInViewer"
+	RbacRoleSkillvisibilityeditor     RbacRole = "SkillVisibilityEditor"
+	RbacRoleStorageintegrationuser    RbacRole = "StorageIntegrationUser"
 	RbacRoleUserdelete                RbacRole = "UserDelete"
 	RbacRoleUserinvite                RbacRole = "UserInvite"
 	RbacRoleViewer                    RbacRole = "Viewer"
@@ -10466,6 +10514,11 @@ type StageInput struct {
 	// Additional metadata about the stage. Should not change the behavior of the query, and should
 	// merely provide more context about how and where the stage is being used.
 	Metadata *StageMetadata `json:"metadata"`
+	// Optional per-stage query window override. If set, this query window is used when the stage is
+	// queried directly as an output stage. When an intermediate stage is inlined into another stage,
+	// the inlining stage's query window is used. This allows different output stages to operate on
+	// different time windows while sharing intermediate computation where appropriate.
+	OutputQueryWindow *QueryParams `json:"outputQueryWindow"`
 }
 
 // GetStageId returns StageInput.StageId, and is useful for accessing the field via an interface.
@@ -10509,6 +10562,9 @@ func (v *StageInput) GetParameterValues() []ParameterBindingInput { return v.Par
 
 // GetMetadata returns StageInput.Metadata, and is useful for accessing the field via an interface.
 func (v *StageInput) GetMetadata() *StageMetadata { return v.Metadata }
+
+// GetOutputQueryWindow returns StageInput.OutputQueryWindow, and is useful for accessing the field via an interface.
+func (v *StageInput) GetOutputQueryWindow() *QueryParams { return v.OutputQueryWindow }
 
 // Metadata a client can send for a particular stage in a query. Should not change
 // the behavior of the query, and should only provide some context around what this
@@ -10589,6 +10645,9 @@ type StagePresentationInput struct {
 	// Only filters where the user has permission will be disabled. Disabled filters will be logged for audit purposes.
 	// This is a request-scoped option for verification/debug workflows.
 	DisabledFilterIds []types.Int64Scalar `json:"disabledFilterIds"`
+	// List of validation modes to apply to the pipeline during compilation.
+	// All validation errors are returned in TaskResult.errors with source spans.
+	PipelineValidators []PipelineValidationMode `json:"pipelineValidators"`
 }
 
 // GetLimit returns StagePresentationInput.Limit, and is useful for accessing the field via an interface.
@@ -10635,6 +10694,11 @@ func (v *StagePresentationInput) GetVariantEncodingMode() *VariantEncodingMode {
 // GetDisabledFilterIds returns StagePresentationInput.DisabledFilterIds, and is useful for accessing the field via an interface.
 func (v *StagePresentationInput) GetDisabledFilterIds() []types.Int64Scalar {
 	return v.DisabledFilterIds
+}
+
+// GetPipelineValidators returns StagePresentationInput.PipelineValidators, and is useful for accessing the field via an interface.
+func (v *StagePresentationInput) GetPipelineValidators() []PipelineValidationMode {
+	return v.PipelineValidators
 }
 
 // StageQuery includes the GraphQL fields of StageQuery requested by the fragment StageQuery.
@@ -11076,7 +11140,7 @@ type WorksheetInput struct {
 	Id              *string                 `json:"id"`
 	Name            *string                 `json:"name"`
 	Description     *string                 `json:"description"`
-	WorkspaceId     string                  `json:"workspaceId"`
+	WorkspaceId     *string                 `json:"workspaceId"`
 	ManagedById     *string                 `json:"managedById"`
 	Layout          *types.JsonObject       `json:"layout"`
 	IconUrl         *string                 `json:"iconUrl"`
@@ -11101,7 +11165,7 @@ func (v *WorksheetInput) GetName() *string { return v.Name }
 func (v *WorksheetInput) GetDescription() *string { return v.Description }
 
 // GetWorkspaceId returns WorksheetInput.WorkspaceId, and is useful for accessing the field via an interface.
-func (v *WorksheetInput) GetWorkspaceId() string { return v.WorkspaceId }
+func (v *WorksheetInput) GetWorkspaceId() *string { return v.WorkspaceId }
 
 // GetManagedById returns WorksheetInput.ManagedById, and is useful for accessing the field via an interface.
 func (v *WorksheetInput) GetManagedById() *string { return v.ManagedById }
