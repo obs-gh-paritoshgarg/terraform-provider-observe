@@ -28,8 +28,8 @@ type LayeredSettingRecord implements WorkspaceObject & AuditedObject & FolderObj
     iconUrl: String
     workspaceId: ObjectId!
     """ reading managedBy for many objects is expensive -- don't do that in a wide search result """
-    managedBy: WorkspaceObject @goField(forceResolver: true)
-    managedById: ObjectId
+    managedBy: WorkspaceObject @goField(forceResolver: true) @deprecated(reason: "managedBy is no longer supported and will always be null")
+    managedById: ObjectId @goField(forceResolver: true) @deprecated(reason: "managedById is no longer supported and will always be null")
 
     folderId: ObjectId!
 
@@ -102,7 +102,7 @@ input LayeredSettingRecordsQueryInput @goModel(model: "observe/lsetting.LayeredS
     """
     This is for "the record is managed by this object," NOT for "the record affects this object."
     """
-    managedById: ObjectId
+    managedById: ObjectId @deprecated(reason: "managedById is no longer supported and will be ignored")
 }
 
 input LayeredSettingTargetQueryInput @goModel(model: "observe/lsetting.SettingTargetQueryInput") {
@@ -186,7 +186,7 @@ input LayeredSettingRecordInput @goModel(model: "observe/lsetting.LayeredSetting
     description: String
     iconUrl: String
     workspaceId: ObjectId!
-    managedById: ObjectId
+    managedById: ObjectId @deprecated(reason: "managedById is no longer supported and will be ignored")
 
     folderId: ObjectId
 }

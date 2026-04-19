@@ -12,7 +12,7 @@ extend type Query {
 }
 
 extend type Subscription {
-    datasetWatch(workspaceId: ObjectId!, watchOptions: DatasetWatchOptions): [DatasetWatchUpdate!]!
+    datasetWatch(workspaceId: ObjectId, watchOptions: DatasetWatchOptions): [DatasetWatchUpdate!]!
 }
 
 type DatasetMatchData @goModel(model: "observe/meta/metatypes.DatasetMatchData") {

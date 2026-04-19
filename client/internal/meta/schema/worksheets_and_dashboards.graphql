@@ -197,7 +197,7 @@ input WorksheetInput @goModel(model: "observe/meta/metatypes.WorksheetInput") {
     id: ObjectId
     name: String # Will be required when label is deprecated
     description: String
-    workspaceId: ObjectId!
+    workspaceId: ObjectId
     managedById: ObjectId
     layout: JsonObject
     iconUrl: String
@@ -257,7 +257,7 @@ input DashboardLinkInput @goModel(model: "observe/meta/metatypes.DashboardLinkIn
     name: String
     description: String
     iconUrl: String
-    workspaceId: ObjectId!
+    workspaceId: ObjectId
     managedById: ObjectId
 
     """

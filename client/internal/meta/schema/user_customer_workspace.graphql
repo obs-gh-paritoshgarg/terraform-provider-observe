@@ -25,7 +25,7 @@ extend type Query {
     Returns groups of bookmarks that should be presented when a
     given user is viewing a given workspace
     """
-    presentedBookmarkGroups(workspaceId: ObjectId!, userId: UserId): [BookmarkGroup!]
+    presentedBookmarkGroups(workspaceId: ObjectId, userId: UserId): [BookmarkGroup!]
     """
     The search result will also be automatically scoped to bookmark groups that live in
     workspaces that the user can actually see. Each search term is restrictive, but
@@ -40,7 +40,7 @@ extend type Query {
     PresentedBookmarks shows bookmarks that should be presented to a specific user when they
     are viewing a specific workspace.
     """
-    presentedBookmarks(workspaceId: ObjectId!, userId: UserId!): [Bookmark!]
+    presentedBookmarks(workspaceId: ObjectId, userId: UserId!): [Bookmark!]
     """
     The search result will also be automatically scoped to bookmarks that live in groups in
     workspaces that the user can actually see. Thus, "customerId" may never need to be specified.
@@ -75,9 +75,9 @@ extend type Mutation {
     access to it through the ACL system. This is because we don't yet have
     a UI to deal with selective access.
     """
-    createWorkspace(definition: WorkspaceInput!): Project
+    createWorkspace(definition: WorkspaceInput!): Project @deprecated(reason: "each customer has exactly one workspace")
     updateWorkspace(id: ObjectId!, definition: WorkspaceInput!): Project
-    deleteWorkspace(id: ObjectId!): ResultStatus!
+    deleteWorkspace(id: ObjectId!): ResultStatus! @deprecated(reason: "each customer has exactly one workspace")
 
     """
     Blobs are arbitrary JSON structs (limited to 128 kB in size) stored with
@@ -315,6 +315,8 @@ enum UserType @goModel(model: "observe/meta/metatypes.UserType") {
     UserTypeOauth2
     UserTypeSaml2
     UserTypeSystem
+    UserTypeServiceAccount
+    UserTypeInternalAccount
 }
 
 input UserPasswordInput @goModel(model: "observe/meta/metatypes.UserPasswordInput") {

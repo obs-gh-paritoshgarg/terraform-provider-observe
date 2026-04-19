@@ -4,7 +4,7 @@ extend type Query {
 }
 
 extend type Mutation {
-    createDatasetOutboundShare(workspaceId: ObjectId!, datasetID: ObjectId!, outboundShareID: ObjectId!, input: DatasetOutboundShareInput!): DatasetOutboundShare!
+    createDatasetOutboundShare(workspaceId: ObjectId, datasetID: ObjectId!, outboundShareID: ObjectId!, input: DatasetOutboundShareInput!): DatasetOutboundShare!
     updateDatasetOutboundShare(id: ObjectId!, input: DatasetOutboundShareInput!): DatasetOutboundShare!
     deleteDatasetOutboundShare(id: ObjectId!): ResultStatus!
 }

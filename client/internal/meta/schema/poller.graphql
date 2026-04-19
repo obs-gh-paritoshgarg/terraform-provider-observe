@@ -1,12 +1,12 @@
 extend type Query {
     poller(id: ObjectId!): Poller!
-    pollers(workspaceId: ObjectId!, kind: PollerKind, name: String, datastreamId: ObjectId): [Poller!]!
-    getPollers(workspaceId: ObjectId!, kind: PollerKind, name: String): [Poller!]!
+    pollers(workspaceId: ObjectId, kind: PollerKind, name: String, datastreamId: ObjectId): [Poller!]!
+    getPollers(workspaceId: ObjectId, kind: PollerKind, name: String): [Poller!]!
 }
 
 extend type Mutation {
     updatePoller(id: ObjectId!, poller: PollerInput!): Poller!
-    createPoller(workspaceId: ObjectId!, poller: PollerInput!): Poller!
+    createPoller(workspaceId: ObjectId, poller: PollerInput!): Poller!
     deletePoller(id: ObjectId!): ResultStatus!
     setPollerDisabled(id: ObjectId!, disabled: Boolean!): ResultStatus!
 }

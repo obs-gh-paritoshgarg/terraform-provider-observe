@@ -22,7 +22,7 @@ extend type Mutation {
     """
     Create an investigation notebook with a mocked alert. For testing only.
     """
-    createTestInvestigationNotebook(workspaceId: ObjectId!, input: InvestigationNotebookInput!): InvestigationNotebook!
+    createTestInvestigationNotebook(workspaceId: ObjectId, input: InvestigationNotebookInput!): InvestigationNotebook!
     """
     Update the user status of a notebook.
     """

@@ -6,7 +6,7 @@ extend type Query {
   """
   Returns the complete list of all versions a DataConnectionModule's definition.
   """
-  dataConnectionModuleVersions(id: String!, workspaceId: ObjectId!, latest: Boolean): [DataConnectionModuleVersion!]!
+  dataConnectionModuleVersions(id: String!, workspaceId: ObjectId, latest: Boolean): [DataConnectionModuleVersion!]!
   """
   Returns the list of all Datasources for a given DataConnection.
   """
@@ -21,10 +21,10 @@ extend type Query {
 }
 
 extend type Mutation {
-    createDatasource(workspaceId: ObjectId!, input: DatasourceInput!): Datasource!
+    createDatasource(workspaceId: ObjectId, input: DatasourceInput!): Datasource!
     updateDatasource(id: ObjectId!, input: DatasourceInput!): Datasource!
     deleteDatasource(id: ObjectId!): ResultStatus!
-    createDataConnection(workspaceId: ObjectId!, input: DataConnectionInput!): DataConnection!
+    createDataConnection(workspaceId: ObjectId, input: DataConnectionInput!): DataConnection!
     updateDataConnection(id: ObjectId!, input: DataConnectionInput!): DataConnection!
     deleteDataConnection(id: ObjectId!): ResultStatus!
 }

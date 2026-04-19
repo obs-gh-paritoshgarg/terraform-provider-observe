@@ -12,7 +12,7 @@ extend type Query {
     Version is a timestamp in nanoseconds.
     """
     monitorVersion(id: ObjectId!, version: String!): Monitor!
-    monitorsInWorkspace(workspaceId: ObjectId!): [Monitor!]!
+    monitorsInWorkspace(workspaceId: ObjectId): [Monitor!]!
     monitorsForDataset(datasetId: ObjectId!): [Monitor!]!
     notificationsForDataset(datasetId: ObjectId!): [Monitor!]!
     activeNotifications(channelIds: [ObjectId!], importance: NotificationImportance): ActiveNotificationInfo!
@@ -43,7 +43,7 @@ extend type Query {
     Get monitorSampleData using monitorInput and the results from a previous run of a monitorPreviewQuery generated with the same monitorInput. 
     Results from the previous run are identified by cursorId.
     """
-    monitorPreviewSampleDataFromCursor(workspaceId: ObjectId!, monitorId: ObjectId!, monitorInput: MonitorInput!, cursorId: String!): MonitorSampleData
+    monitorPreviewSampleDataFromCursor(workspaceId: ObjectId, monitorId: ObjectId!, monitorInput: MonitorInput!, cursorId: String!): MonitorSampleData
 
     """
     Receive an actionInput and sample data payload to render all the fields in the mustache template.
@@ -58,17 +58,17 @@ extend type Mutation {
     deleteMonitorAction(id: ObjectId!): ResultStatus! @deprecated(reason:"legacy monitor V1 APIs are being deprecated. use deleteMonitorV2Action instead")
     testMonitorAction(id: ObjectId, input: MonitorActionInput!, payload: String!): ResultStatus! @deprecated(reason:"legacy monitor V1 APIs are being deprecated. use testMonitorV2Alert, instead")
 
-    createChannelAction(workspaceId: ObjectId!, action: ActionInput!): ChannelAction! @deprecated(reason:"use createMonitorAction instead")
+    createChannelAction(workspaceId: ObjectId, action: ActionInput!): ChannelAction! @deprecated(reason:"use createMonitorAction instead")
     updateChannelAction(id: ObjectId!, action: ActionInput!): ChannelAction! @deprecated(reason:"use updateMonitorAction instead")
     deleteChannelAction(id: ObjectId!): ResultStatus! @deprecated(reason:"use deleteMonitorAction instead")
     testChannelAction(id: ObjectId, action: ActionInput!, payload: String!): ResultStatus! @deprecated(reason:"use testMonitorAction instead")
 
-    createChannel(workspaceId: ObjectId!, channel: ChannelInput!, actions: [ObjectId!]): Channel!
+    createChannel(workspaceId: ObjectId, channel: ChannelInput!, actions: [ObjectId!]): Channel!
     updateChannel(id: ObjectId!, channel: ChannelInput, actions: [ObjectId!]): Channel!
     deleteChannel(id: ObjectId!): ResultStatus!
 
-    createMonitor(workspaceId: ObjectId!, monitor: MonitorInput!): MonitorUpdateResult! @deprecated(reason:"legacy monitor V1 APIs are being deprecated. use createMonitorV2 instead")
-    createMonitorWithActions(workspaceId: ObjectId!, monitor: MonitorInput!, newActions:[ActionInput!], addActionsToMonitorIds:[ObjectId!]): MonitorUpdateResult! @deprecated(reason:"legacy monitor V1 APIs are being deprecated. use createMonitorV2WithActions instead")
+    createMonitor(workspaceId: ObjectId, monitor: MonitorInput!): MonitorUpdateResult! @deprecated(reason:"legacy monitor V1 APIs are being deprecated. use createMonitorV2 instead")
+    createMonitorWithActions(workspaceId: ObjectId, monitor: MonitorInput!, newActions:[ActionInput!], addActionsToMonitorIds:[ObjectId!]): MonitorUpdateResult! @deprecated(reason:"legacy monitor V1 APIs are being deprecated. use createMonitorV2WithActions instead")
     updateMonitor(id: ObjectId!, monitor: MonitorInput!): MonitorUpdateResult! @deprecated(reason:"legacy monitor V1 APIs are being deprecated. use updateMonitorV2 instead")
     """
     Update the monitor.
@@ -817,7 +817,7 @@ input MonitorActionInput @goModel(model: "observe/meta/metatypes.MonitorActionIn
     email: EmailActionInput
     webhook: WebhookActionInput
 
-    workspaceId: ObjectId!
+    workspaceId: ObjectId
     name: String!
     iconUrl: String
     description: String

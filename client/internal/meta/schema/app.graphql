@@ -12,7 +12,7 @@ enum ConnectionCategory @goModel(model: "observe/meta/metatypes.ConnectionCatego
 
 extend type Query {
     folder(id: ObjectId!): Folder!
-    folders(workspaceId: ObjectId!, name: String, includePersonals: IncludePersonalsKind): [Folder!]!
+    folders(workspaceId: ObjectId, name: String, includePersonals: IncludePersonalsKind): [Folder!]!
 
     module(id: String!, version: String): Module!
     modules(search: String, isConnection: Boolean): [Module!]!
@@ -20,21 +20,21 @@ extend type Query {
     moduleVersions(id: String!, workspaceId: ObjectId): [ModuleVersion!]!
 
     app(id: ObjectId!): App!
-    apps(workspaceId: ObjectId!, name: String): [App!]!
+    apps(workspaceId: ObjectId, name: String): [App!]!
     appConfig(id: ObjectId!, targetVersion: String!): AppConfig!
     appChanges(id: ObjectId!, app: AppInput!): AppChanges!
 
     appDataSource(id: ObjectId!): AppDataSource!
-    searchAppDataSources(workspaceId: ObjectId!, appId: ObjectId): [AppDataSource!]!
+    searchAppDataSources(workspaceId: ObjectId, appId: ObjectId): [AppDataSource!]!
 }
 
 extend type Mutation {
-    createApp(workspaceId: ObjectId!, app: AppInput!): App!
+    createApp(workspaceId: ObjectId, app: AppInput!): App!
     updateApp(id: ObjectId!, app: AppInput!): App!
     deleteApp(id: ObjectId!): ResultStatus!
-    installApp(workspaceId: ObjectId!, moduleId: String!, variables: [AppVariableInput!]): App!
+    installApp(workspaceId: ObjectId, moduleId: String!, variables: [AppVariableInput!]): App!
 
-    createFolder(workspaceId: ObjectId!, folder: FolderInput!): Folder!
+    createFolder(workspaceId: ObjectId, folder: FolderInput!): Folder!
     updateFolder(id: ObjectId!, folder: FolderInput!): Folder!
     deleteFolder(id: ObjectId!): ResultStatus!
 
@@ -88,7 +88,7 @@ type Module @goModel(model: "observe/meta/metatypes.Module") {
     connectionName: String!
     connectionCategory: ConnectionCategory!
 
-    apps(workspaceId: ObjectId!): [App!] @goField(forceResolver:true)
+    apps(workspaceId: ObjectId): [App!] @goField(forceResolver:true)
 }
 
 """

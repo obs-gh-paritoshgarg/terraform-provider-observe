@@ -15,11 +15,11 @@ extend type Query {
     """
     Get all the correlation tags defined.
     """
-    searchCorrelationTag(workspaceId: ObjectId!, nameExact: String, nameSubstring: String): [String!]
+    searchCorrelationTag(workspaceId: ObjectId, nameExact: String, nameSubstring: String): [String!]
 }
 
 extend type Mutation {
-    createDeferredForeignKey(workspaceId: ObjectId!, data: DeferredForeignKeyInput!): DeferredForeignKey
+    createDeferredForeignKey(workspaceId: ObjectId, data: DeferredForeignKeyInput!): DeferredForeignKey
     updateDeferredForeignKey(id: ObjectId!, data: DeferredForeignKeyInput!): DeferredForeignKey
     deleteDeferredForeignKey(id: ObjectId!): ResultStatus
 

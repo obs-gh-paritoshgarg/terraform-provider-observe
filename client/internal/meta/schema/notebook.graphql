@@ -4,7 +4,7 @@ extend type Query {
 }
 
 extend type Mutation {
-    createInvestigationNotebook(workspaceId: ObjectId!, input: InvestigationNotebookInput!): InvestigationNotebook!
+    createInvestigationNotebook(workspaceId: ObjectId, input: InvestigationNotebookInput!): InvestigationNotebook!
     updateInvestigationNotebook(id: ObjectId!, input: InvestigationNotebookInput!): InvestigationNotebook!
     deleteInvestigationNotebook(id: ObjectId!): ResultStatus!
 }

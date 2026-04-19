@@ -210,10 +210,8 @@ type TaskResultSchema @goModel(model: "observe/meta/metatypes.TaskResultSchema")
     kind: DatasetKind!
     interfaces: [ImplementedInterface!]! @goField(forceResolver:true)
     metrics: [Metric!]! @goField(forceResolver:true)
-    accelerable: Boolean!
     accelerationType: AccelerationType!
     eligibleAsView: Boolean!
-    streamable: Boolean! @deprecated(reason:"renamed to accelerable") @goField(name:accelerable)
     indexMetadata: IndexMetadata @deprecated(reason: "use fieldList.indexDefs instead")
     """
     Alignment and alignedTimeRange are set when the produced result is on an
@@ -237,10 +235,6 @@ type TaskResultSchema @goModel(model: "observe/meta/metatypes.TaskResultSchema")
     """
     sortColumnOrdering: [ColumnOrder!]
 
-    """
-    Information about the limit returned by the backend
-    """
-    limit: Int64
 }
 
 type ObjectTypedef @goModel(model: "observe/compiler/comptypes.ObjectTypedef") {
@@ -492,6 +486,13 @@ input StageInput @goModel(model: "observe/meta/metaparser.StageInput") {
     merely provide more context about how and where the stage is being used.
     """
     metadata: StageMetadata
+    """
+    Optional per-stage query window override. If set, this query window is used when the stage is
+    queried directly as an output stage. When an intermediate stage is inlined into another stage,
+    the inlining stage's query window is used. This allows different output stages to operate on
+    different time windows while sharing intermediate computation where appropriate.
+    """
+    outputQueryWindow: QueryParams
 }
 
 """
@@ -895,6 +896,33 @@ input StagePresentationInput @goModel(model: "observe/meta/metaparser.StagePrese
     This is a request-scoped option for verification/debug workflows.
     """
     disabledFilterIds: [Int64!]
+
+    """
+    List of validation modes to apply to the pipeline during compilation.
+    All validation errors are returned in TaskResult.errors with source spans.
+    """
+    pipelineValidators: [PipelineValidationMode!]
+}
+
+"""
+Validation modes that can be applied to a pipeline during compilation.
+Multiple validators can be specified and all errors are collected.
+"""
+enum PipelineValidationMode @goModel(model: "observe/meta/metaparser.PipelineValidationMode") {
+    """
+    Validates that the pipeline is valid for use as a Dataset Query Filter.
+    Produces errors if non-filter verbs (make_col, aggregate, etc.) or link
+    references (e.g., label(^"Parent Container")) are found.
+    """
+    DATASET_QUERY_FILTER
+
+    """
+    Validates that the pipeline produces insert-only output.
+    Produces errors if verbs that break insert-only behavior (aggregate, sort,
+    timechart, etc.) are found. Used for validating shaping pipelines in
+    features like Log Derived Metrics.
+    """
+    INSERT_ONLY
 }
 
 """

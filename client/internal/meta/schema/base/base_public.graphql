@@ -5,7 +5,7 @@ directive @goModel(model: String, models: [String!]) on OBJECT
     | INTERFACE
     | UNION
 
-directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION
+directive @goField(forceResolver: Boolean, name: String, omittable: Boolean) on INPUT_FIELD_DEFINITION
     | FIELD_DEFINITION
 
 directive @eol on
@@ -50,6 +50,7 @@ scalar Int64 @goModel(model: "observe/meta/metascalar.Int64")
 scalar JsonObject @goModel(model: "observe/meta/metascalar.ObjectScalar")
 scalar Number @goModel(model: "observe/meta/metascalar.Number")
 scalar ObjectId @goModel(model: "observe/meta/metascalar.ObjectId")
+scalar RbacResourceId @goModel(model: "observe/access/resourceid.Id")
 scalar SnowflakeCursor @goModel(model: "observe/meta/metaparser.SnowflakeCursor")
 scalar StatsVector @goModel(model: "observe/meta/metastats.Vector")
 

@@ -8,7 +8,7 @@ extend type Query {
 }
 
 extend type Mutation {
-    createIngestToken(workspaceId: ObjectId!, input: IngestTokenInput!): IngestToken!
+    createIngestToken(workspaceId: ObjectId, input: IngestTokenInput!): IngestToken!
     updateIngestToken(id: ObjectId!, input: IngestTokenInput!): IngestToken!
     deleteIngestToken(id: ObjectId!): ResultStatus!
 }

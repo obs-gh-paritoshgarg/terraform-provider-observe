@@ -225,7 +225,7 @@ extend type Mutation {
     path, even if it means that the path will be left in error state, else
     an error will be returned.
     """
-    createPreferredPath(workspaceId: ObjectId!, path: PreferredPathInput!, acceptInErrorState: Boolean): PreferredPathWithStatus!
+    createPreferredPath(workspaceId: ObjectId, path: PreferredPathInput!, acceptInErrorState: Boolean): PreferredPathWithStatus!
     """
     Update a preferred path. When 'acceptInErrorState" is true, the API will accept
     a save/update for a path, even if it means that the path will be left in error

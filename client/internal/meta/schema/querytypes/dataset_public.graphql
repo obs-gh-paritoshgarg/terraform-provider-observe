@@ -5,6 +5,24 @@ enum DatasetKind @goModel(model: "observe/compiler/comptypes.DatasetKind") {
     Interval
 }
 
+"""
+DatasetContentType describes the kind of data a dataset contains.
+This is a simplified replacement for the interface mechanism.
+"""
+enum DatasetContentType @goModel(model: "observe/meta/metatypes.DatasetContentType") {
+    Unknown
+    Resource
+    Log
+    Metric
+    MetricMetadata
+    OTelSpan
+    OTelTrace
+    ActionNotification
+    MergedNotification
+    MaterializedNotification
+}
+
+
 input MultiStageQueryInput @goModel(model: "observe/meta/metatypes.MultiStageQueryInput") {
     outputStage: String!
     stages: [StageQueryInput!]!

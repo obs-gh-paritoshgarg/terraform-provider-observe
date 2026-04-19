@@ -6,7 +6,7 @@ extend type Query {
     Eventually this should be replaced by the usage dashboard, which has more
     complete stats than this limited API.
     """
-    queryRateLimitingStats(workspaceId: ObjectId!): QueryRateLimitingStats
+    queryRateLimitingStats(workspaceId: ObjectId): QueryRateLimitingStats
 
     """
     This is equivalent to queryRateLimitingStats{dailyAvgCreditUsagePast7Days}.
@@ -20,7 +20,7 @@ extend type Query {
     SYSTEM datastream. Currently, we return only aggregate usage information. In the future, we will
     also return governor specific state.
     """
-    transformRateLimitingStats(workspaceId: ObjectId!): TransformRateLimitingStats
+    transformRateLimitingStats(workspaceId: ObjectId): TransformRateLimitingStats
 }
 
 type TransformRateLimitingStats @goModel(model: "observe/meta/metatypes.TransformRateLimitingStats") {

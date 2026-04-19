@@ -62,12 +62,6 @@ extend type Mutation {
   """
   installTracingContent(input: TracingContentInput): TracingContent!
 
-  """
-  Configures an existing Tracing Content installation.  Each field is optional
-  for the PATCH semantics. Most of the customizations may result in
-  rematerialization of the target dataset(s) and all of the downstreams.
-  """
-  configureTracingContent(input: TracingContentConfigurationInput!, rematerializationAction: RematerializationAction): TracingContent!
 
   """
   Installs the LLM Content for the current customer if not present.  Returns
@@ -75,6 +69,20 @@ extend type Mutation {
   the installation procedure.
   """
   installLlmContent(input: LlmContentInput): LlmContent!
+
+  """
+  Install the Monitoring Content for the current customer if not present.
+  Returns an error if the content is already installed or if there were
+  errors during the installation procedure. When no input is provided,
+  the System dataset is auto-discovered.
+  """
+  installMonitoringContent(input: MonitoringContentInput): MonitoringContent!
+
+  """
+  Delete the Monitoring Content for the current customer.
+  Fails if no Monitoring Content is installed.
+  """
+  deleteMonitoringContent: ResultStatus!
 }
 
 extend type Query {
@@ -97,6 +105,12 @@ extend type Query {
   tracingContent: TracingContent
 
   llmContent: LlmContent
+
+  """
+  Retrieves the Monitoring Content information for the current customer.
+  Returns nil if no Monitoring Content is installed.
+  """
+  monitoringContent: MonitoringContent
 }
 
 """
@@ -213,6 +227,10 @@ enum TracingContentOption @goModel(model: "observe/meta/metatypes.TracingContent
   NamespaceEnvironmentAvailableDrilldown flag indicates the backend is adding namespace and environment tags to drill-down metrics.
   """
   NamespaceEnvironmentAvailableDrilldown
+  """
+  ModelMessageBrokerEntitiesAvailable flag indicates the backend is modeling message broker entities as first-class services.
+  """
+  ModelMessageBrokerEntitiesAvailable
 }
 
 input TracingContentConfigurationInput @goModel(model: "observe/meta/metatypes.TracingContentConfigurationInput") {
@@ -303,6 +321,13 @@ input TracingContentConfigurationInput @goModel(model: "observe/meta/metatypes.T
   produceExternalCalls: Boolean
 
   """
+  Controls whether the backend should model message broker entities as first-class services.
+
+  Default value: false
+  """
+  modelMessageBrokerEntities: Boolean
+
+  """
   Controls whether the backend should compute exception fingerprints (Phase 1).
   When enabled, exception fingerprints will be computed and stored in the error tracking metrics.
   """
@@ -382,3 +407,30 @@ type LlmContent @goModel(model: "observe/meta/metatypes.LlmContent") {
   llmSpansDatasetId: ObjectId!
   llmMetricsDatasetId: ObjectId!
 }
+
+"""
+Models the required information to create the Monitoring Content.
+When omitted from the mutation, the System dataset is auto-discovered.
+"""
+input MonitoringContentInput @goModel(model: "observe/meta/metatypes.MonitoringContentInput") {
+  """
+  The ID of the System source dataset that the Monitoring Content depends on.
+  """
+  systemDatasetId: ObjectId!
+}
+
+"""
+Models the complete information of an installed Monitoring Content.
+"""
+type MonitoringContent @goModel(model: "observe/meta/metatypes.MonitoringContent") {
+  """
+  The ID of the System source dataset that the Monitoring Content depends on.
+  """
+  systemDatasetId: ObjectId!
+
+  detectionsDatasetId: ObjectId!
+  alarmsDatasetId: ObjectId!
+  messagesDatasetId: ObjectId!
+  statsDatasetId: ObjectId!
+}
+

@@ -20,7 +20,7 @@ extend type Query {
 }
 
 extend type Mutation {
-    createDataExportJob(workspaceId: ObjectId!, input: DataExportJobInput!): DataExportJob!
+    createDataExportJob(workspaceId: ObjectId, input: DataExportJobInput!): DataExportJob!
     updateDataExportJob(id: ObjectId!, input: DataExportJobInput!): DataExportJob!
     deleteDataExportJob(id: ObjectId!): ResultStatus!
 }
