@@ -41,6 +41,11 @@ extend type Query {
     rbacResourceStatements(ids: [ObjectId!]!): [RbacStatement!]!
 
     """
+    Get all RBAC resource statements for several resources at once
+    """
+    rbacResourceStatementsV2(ids: [RbacResourceId!]!): [RbacStatement!]!
+
+    """
     Given a particular user, and a particular object/role request, return what would happen.
     Note that we assume that the customer owning the object is the current
     customer, if the actual owning customer of the object is someone else, the

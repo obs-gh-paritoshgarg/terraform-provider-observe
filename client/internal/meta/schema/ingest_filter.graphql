@@ -22,7 +22,7 @@ extend type Query {
 }
 
 extend type Mutation {
-    createIngestFilter(workspaceId: ObjectId!, input: IngestFilterInput!): IngestFilter!
+    createIngestFilter(workspaceId: ObjectId, input: IngestFilterInput!): IngestFilter!
     updateIngestFilter(id: ObjectId!, input: IngestFilterInput!): IngestFilter!
     deleteIngestFilter(id: ObjectId!): ResultStatus!
 }

@@ -1,10 +1,10 @@
 extend type Query {
     datastream(id: ObjectId!): Datastream!
-    datastreams(workspaceId: ObjectId!, name: String): [Datastream!]!
+    datastreams(workspaceId: ObjectId, name: String): [Datastream!]!
 }
 
 extend type Mutation {
-    createDatastream(workspaceId: ObjectId!, datastream: DatastreamInput!): Datastream!
+    createDatastream(workspaceId: ObjectId, datastream: DatastreamInput!): Datastream!
     updateDatastream(id: ObjectId!, datastream: DatastreamInput!): Datastream!
     deleteDatastream(id: ObjectId!): ResultStatus!
 }

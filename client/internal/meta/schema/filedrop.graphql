@@ -25,7 +25,7 @@ extend type Query {
 }
 
 extend type Mutation {
-    createFiledrop(workspaceId: ObjectId!, datastreamID: ObjectId!, input: FiledropInput!): Filedrop!
+    createFiledrop(workspaceId: ObjectId, datastreamID: ObjectId!, input: FiledropInput!): Filedrop!
     updateFiledrop(id: ObjectId!, input: FiledropInput!): Filedrop!
     deleteFiledrop(id: ObjectId!): ResultStatus!
 }

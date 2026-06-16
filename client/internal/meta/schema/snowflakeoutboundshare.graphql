@@ -4,7 +4,7 @@ extend type Query {
 }
 
 extend type Mutation {
-    createSnowflakeOutboundShare(workspaceId: ObjectId!, input: SnowflakeOutboundShareInput!): SnowflakeOutboundShare!
+    createSnowflakeOutboundShare(workspaceId: ObjectId, input: SnowflakeOutboundShareInput!): SnowflakeOutboundShare!
     updateSnowflakeOutboundShare(id: ObjectId!, input: SnowflakeOutboundShareInput!): SnowflakeOutboundShare!
     deleteSnowflakeOutboundShare(id: ObjectId!): ResultStatus!
 }

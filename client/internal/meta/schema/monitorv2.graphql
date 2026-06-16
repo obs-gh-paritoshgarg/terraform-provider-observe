@@ -5,18 +5,161 @@ extend type Query {
     searchMonitorV2Action(workspaceId: ObjectId, folderId: ObjectId, nameExact: String, nameSubstring: String): MonitorV2ActionSearchResult!
     monitorV2MuteRule(id: ObjectId!): MonitorV2MuteRule!
     searchMonitorV2MuteRule(workspaceId: ObjectId, folderId: ObjectId, nameExact: String, nameSubstring: String): MonitorV2MuteRuleSearchResult!
+    """
+    Allows frontend to retrieve the necessary OPAL and schema metadata to visualize an appropriate
+    evaluated data preview for the user.
+    """
+    evaluateMonitorV2Source(input: MonitorV2Input!): MonitorV2SourceEvaluation!
+
+    """
+    Accepts the same input as create or update, but for the purpose of showing to the user
+    how the candidate monitor definition will behave against the input data. The return is a preview type that
+    shows how the monitoring strategy will emit results.
+    """
+    previewMonitorV2(workspaceId: ObjectId, input: MonitorV2Input!, params: QueryParams!): MonitorV2Preview!
+
+    """
+    Allows fetching of the current or previous MonitorV2 by id and version
+    (where version is the same as the monitorVersion of the MonitorV2). The purpose here is to obtain the
+    definition for historical DetectionEvent's emitted. This can be used to understand what the upstream
+    data looked like at the time of the detection event (noting of course that the actual data may have changed
+    due to rematerialization).
+    """
+    monitorV2DefinitionByVersion(id: ObjectId!, version: Int64!): MonitorV2Definition!
+
+    """
+    Takes in the monitor v2 input and the alarm input to produce a template dictionary
+    for the frontend which can be used to render the template. The URLs generated will be the normal
+    URLs in the observe UI, but with zero value identifiers. The optional workspaceId is so that
+    any URLs with a workspaceId have the correct value.
+    """
+    monitorV2TemplateDictionary(
+        workspaceId: ObjectId,
+        monitorId: ObjectId,
+        alertType: MonitorV2AlertType,
+        monitorInput: MonitorV2Input!,
+        alarmInput: MonitorV2AlarmInput!,
+    ): TemplateDictionary!
+
+    """
+    Receive an actionInput and sample data payload to render all the fields in the mustache template.
+    SampleData is the json payload that contains all the fields to render the mustache template.
+    """
+    monitorV2RenderTemplate(
+        templateDict: JsonObject!,
+        actionInput: MonitorV2ActionInput!,
+    ): RenderedTemplate!
+
+    """
+    Can be used to query alerts in the explorer using various optional filters.
+
+    monitorIds optionally restricts to a specific monitors
+    nameSubstring restricts to monitors with partial match on the name
+    alarmId optionally restricts to a single alarm
+    minTime and maxTime optionally restrict to alarms that partially overlap with the time range
+    levels optionally restricts by severity levels
+    groupingHash optionally restricts to alarms with the same groupiingHash, which can be used to
+        see logically grouped alarms.
+    active optionally filters on the active flag
+
+    note: At this time, rbac enforcement is done on the associated monitor for list privs
+    """
+    searchMonitorV2Alarms(
+        workspaceId: ObjectId,
+        monitorIds: [ObjectId!],
+        nameSubstring: String,
+        alarmId: String,
+        minTime: Time,
+        maxTime: Time,
+        levels: [MonitorV2AlarmLevel!],
+        groupingHash: Int64,
+        active: Boolean,
+    ): MonitorV2AlarmSearchResult!
+
+    """
+    Returns counts of monitor v2 alarms grouped by various facets (monitor name, status, level, muted).
+    This is useful for displaying summary statistics and filter counts in the UI.
+
+    minTime and maxTime optionally restrict to alarms that partially overlap with the time range
+    """
+    getMonitorV2AlarmCounts(
+        workspaceId: ObjectId,
+        minTime: Time,
+        maxTime: Time,
+    ): MonitorV2AlarmCountsResult!
 }
 
 extend type Mutation {
-    createMonitorV2(workspaceId: ObjectId!, input: MonitorV2Input!): MonitorV2!
+    createMonitorV2(workspaceId: ObjectId, input: MonitorV2Input!): MonitorV2!
     updateMonitorV2(id: ObjectId!, input: MonitorV2Input!): MonitorV2!
     deleteMonitorV2(id: ObjectId!): ResultStatus!
-    createMonitorV2Action(workspaceId: ObjectId!, input: MonitorV2ActionInput!): MonitorV2Action!
+    createMonitorV2Action(workspaceId: ObjectId, input: MonitorV2ActionInput!): MonitorV2Action!
     updateMonitorV2Action(id: ObjectId!, input: MonitorV2ActionInput!): MonitorV2Action!
     deleteMonitorV2Action(id: ObjectId!): ResultStatus!
-    createMonitorV2MuteRule(workspaceId: ObjectId!, input: MonitorV2MuteRuleInput!): MonitorV2MuteRule!
+    createMonitorV2MuteRule(workspaceId: ObjectId, input: MonitorV2MuteRuleInput!): MonitorV2MuteRule!
     updateMonitorV2MuteRule(id: ObjectId!, input: MonitorV2MuteRuleInput!): MonitorV2MuteRule!
     deleteMonitorV2MuteRule(id: ObjectId!): ResultStatus!
+    """
+    Replaces all monitor relations (MonitorV2ActionRule, ActionDestinationLink)
+    for the provided monitor with the provided list of actionRules and destinationLinks.
+    Shared Actions can't be mutated through this call other than attaching it to the monitor, so you will need to used
+    saveActionWithDestinationLinks to mutate sharedAction's links to the destinations.
+    It does not allow you to mutate any shared actions' relationships with the destinations. Only the inlined actions'
+    relationships with the destinations are mutateable.Hence, this API will error out if you provide destinationLinks
+    where the action is shared.
+    """
+    saveMonitorV2Relations(monitorId: ObjectId!, actionRelations: [ActionRelationInput!]): MonitorV2!
+
+    """
+    Allows an explicit termination of an active alarm. The purpose is to
+    give the user the ability to eliminate via termination an active alarm that for some reason
+    did not end normally. This is possibly an escape hatch for early adoption bugs, but could end
+    up being an imperative for edge cases we haven't anticipated and where a snooze or mute is
+    not appropriate.
+    """
+    terminateMonitorV2Alarm(alarmId: String!): MonitorV2Alarm!
+
+    """
+    A fast way to remove all mute rules tied to a single monitor.
+    note: This has no impact on global mutes that may exist, which always apply to all
+    monitors.
+    """
+    unmuteMonitorV2(id: ObjectId!): MonitorV2!
+
+    """
+    Sets the enabled/disabled-ness of a monitor. Disabling a monitor will
+    stop evaluation and detection of the monitor.
+    """
+    setMonitorV2Enabled(id: ObjectId!, enabled: Boolean!): MonitorV2!
+
+    """
+    Takes in the template dictionary generated from monitorV2TemplateDictionary along with
+    the actionInput and destinationInputs object. Afterward, it sends a test alert to see whether the customer can
+    receive an alert at their designated end point.
+    """
+    testMonitorV2Alert(
+        templateDict: JsonObject!,
+        actionInput: MonitorV2ActionInput!,
+    ): ResultStatus!
+
+    """
+    SaveMonitorV2WithActions builds on the primitives of createMonitorV2, updateMonitorV2,
+    createMonitorV2Action, updateMonitorV2Action, deleteMonitorV2Action, and saveMonitorV2Relations.
+    The intent is to provide a one-shot API for easier use in terraforming and a more transactional
+    API for the front-end. The way this function works is as follows.
+
+    If monitorId is set, the input field is considered an update to an existing monitor. Otherwise,
+    this is treated as a creation.
+
+    The actions list is the ordered list the user is creating the actions. It can include existing
+    actions (typically already-created shared actions) or actions to be created (typically inline).
+    """
+    saveMonitorV2WithActions(
+        workspaceId: ObjectId,
+        monitorId: ObjectId,
+        input: MonitorV2Input!,
+        actions: [MonitorV2ActionAndRelationInput!],
+    ): MonitorV2!
 }
 
 """
@@ -28,6 +171,14 @@ enum MonitorV2ActionType @goModel(model: "observe/meta/metatypes.MonitorV2Action
   PagerDuty
   Slack
   Webhook
+}
+
+"""
+Controls whether AI SRE automatically triages alerts for a monitor.
+"""
+enum MonitorV2AiTriagingMode @goModel(model: "observe/meta/metatypes.MonitorV2AiTriagingMode") {
+  None
+  Triage
 }
 
 """
@@ -133,6 +284,78 @@ enum MonitorV2RollupStatus @goModel(model: "observe/meta/metatypes.MonitorV2Roll
 }
 
 """
+MonitorV2DisabledCause describes why a monitor is disabled.
+When a monitor is disabled, this field always indicates the reason.
+"""
+enum MonitorV2DisabledCause @goModel(model: "observe/meta/metatypes.MonitorV2DisabledCause") {
+  """
+  The monitor was disabled explicitly by a user.
+  """
+  User
+  """
+  The monitor was automatically disabled by the system because it exceeded
+  the maximum alert rate limit (maxAlertsPerHour).
+  """
+  AlertRateLimit
+  """
+  The monitor was automatically disabled by the system because it exceeded
+  its cost limit (cost governor).
+  """
+  Cost
+}
+
+"""
+MonitorV2DisabledDetail provides structured information about why a monitor is disabled.
+The cause field indicates the general reason, and exactly one of the cause-specific
+sub-objects (cost, alertRateLimit, user) is populated with contextual detail.
+"""
+type MonitorV2DisabledDetail @goModel(model: "observe/meta/metatypes.MonitorV2DisabledDetail") {
+    cause: MonitorV2DisabledCause!
+    cost: MonitorV2DisabledByCost
+    alertRateLimit: MonitorV2DisabledByAlertRateLimit
+    user: MonitorV2DisabledByUser
+}
+
+"""
+MonitorV2DisabledByCost contains detail when a monitor was disabled by the cost governor.
+"""
+type MonitorV2DisabledByCost @goModel(model: "observe/meta/metatypes.MonitorV2DisabledByCost") {
+    """
+    The credit limit per day that the monitor exceeded.
+    """
+    creditLimitPerDay: Float!
+}
+
+"""
+MonitorV2DisabledByAlertRateLimit contains detail when a monitor was auto-disabled
+because it exceeded the maximum alert rate limit.
+"""
+type MonitorV2DisabledByAlertRateLimit @goModel(model: "observe/meta/metatypes.MonitorV2DisabledByAlertRateLimit") {
+    """
+    The configured maximum alerts per hour for this monitor.
+    """
+    alertRateLimit: Int64!
+    """
+    The actual number of alerts generated in the lookback window that triggered the disable.
+    """
+    alertsGenerated: Int64!
+    """
+    The lookback window duration over which alerts were counted.
+    """
+    lookbackDuration: Duration!
+}
+
+"""
+MonitorV2DisabledByUser contains detail when a monitor was explicitly disabled by a user.
+"""
+type MonitorV2DisabledByUser @goModel(model: "observe/meta/metatypes.MonitorV2DisabledByUser") {
+    """
+    The user who disabled the monitor.
+    """
+    disabledBy: UserId!
+}
+
+"""
 MonitorV2RuleKind describes the strategy used to inspect the input query.
  - Count is used when what you care to inspect is the number of rows/instances 
    in the query result.
@@ -180,12 +403,31 @@ type MonitorV2 implements WorkspaceObject & AuditedObject & FolderObject @goMode
     """
     disabled: Boolean
     """
+    When the monitor is disabled, this field provides structured detail about
+    why it was disabled (cause, plus cause-specific contextual fields).
+    Null when the monitor is enabled.
+    """
+    disabledDetail: MonitorV2DisabledDetail
+    """
     A longer description of the monitor.
     This can include details like how to resolve the issue, links to runbooks, etc.
     """
     comment: String @deprecated(reason:"Use the description field over the comment field")
     meta: MonitorV2Meta @goField(forceResolver: true)
     rollupStatus: MonitorV2RollupStatus! @goField(forceResolver: true)
+    """
+    GovernorStatus represents the cost governor status of this monitor.
+    When a cost limit is configured (at monitor or customer level), this field
+    indicates whether the monitor is running normally, in a grace period, or
+    disabled due to exceeding cost limits.
+    """
+    governorStatus: MonitorV2GovernorStatus @goField(forceResolver: true)
+    """
+    AnomalyEvaluationMetadata contains computed anomaly detection parameters
+    derived from the monitor definition. Only populated for anomaly monitors,
+    null for all other monitor types.
+    """
+    anomalyEvaluationMetadata: AnomalyEvaluationMetadata @goField(forceResolver: true)
     definition: MonitorV2Definition!
     """
     Describes the type of each of the rules in the definition (they must all be the same type).
@@ -226,12 +468,9 @@ type MonitorV2 implements WorkspaceObject & AuditedObject & FolderObject @goMode
     """
     investigationInfo: MonitorV2InvestigationInfo @deprecated(reason:"This is a POC field and not for production use.")
     """
-    GovernorStatus represents the cost governor status of this monitor.
-    When a cost limit is configured (at monitor or customer level), this field
-    indicates whether the monitor is running normally, in a grace period, or
-    disabled due to exceeding cost limits.
+    Controls whether an AI SRE investigation is automatically triggered when this monitor fires an alert.
     """
-    governorStatus: MonitorV2GovernorStatus @goField(forceResolver: true)
+    aiTriagingMode: MonitorV2AiTriagingMode
     id: ObjectId!
     workspaceId: ObjectId!
     name: String!
@@ -257,6 +496,7 @@ input MonitorV2Input @goModel(model: "observe/meta/metatypes.MonitorV2Input") {
     definition: MonitorV2DefinitionInput!
     ruleKind: MonitorV2RuleKind!
     investigationInfo: MonitorV2InvestigationInfoInput
+    aiTriagingMode: MonitorV2AiTriagingMode
     name: String!
     iconUrl: String
     description: String
@@ -419,7 +659,7 @@ type MonitorV2Definition @goModel(model: "observe/meta/metatypes.MonitorV2Defini
     and automatically disabled by the system.
     Must be non-negative.  Default value when not provided is 100.
     Maximum value is typically 3600 (one alert per second) to ensure monitors are actionable.
-    When set to 0, the maximum value will be used.
+    When set to 0, the maximum value will be used. 
     Contact support if you need to increase this maximum and allow more
     than one alert per second.
     """
@@ -477,7 +717,7 @@ type MonitorV2AnomalyRuleTemplate @goModel(model: "observe/meta/metatypes.Monito
     ComputationWindow describes the length of the window used to compute the average and the deviation.
     When not provided, the computation window will be dynamically chosen based on the lookbackTime provided.
     """
-    computationWindow: Duration
+    computationWindow: Duration @deprecated(reason: "This field is currently NOT SUPPORTED and will be computed automatically by the backend. This value will be completely ignored and should not be provided.")
     """
     ValueColumnName indicates which of the columns in the input query to apply the basic algorithm and create
     bounds over.
@@ -1088,6 +1328,12 @@ type MonitorV2Alarm @goModel(model: "observe/meta/metatypes.MonitorV2Alarm") {
     """
     groupingHash: Int64!
     """
+    Context represents the set of values for which this alarm triggered. It
+    uniquely identifies an alarm for a given monitor and within a given
+    time range.
+    """
+    context: [MonitorV2ContextEntry!]!
+    """
     Version of the monitor at the time this alarm was created.
     """
     monitorVersion: Int64!
@@ -1112,6 +1358,12 @@ input MonitorV2AlarmInput @goModel(model: "observe/meta/metatypes.MonitorV2Alarm
     detectedStart: Time!
     detectedEnd: Time
     capturedValues: [MonitorV2CapturedValueInput!]!
+    """
+    Context represents the set of values for which this alarm triggered. This mirrors
+    the output-only `MonitorV2Alarm.context` field and is accepted here so clients can
+    pass preview alarms directly into template-dictionary generation.
+    """
+    context: [MonitorV2ContextEntryInput!]
     isActive: Boolean!
     level: MonitorV2AlarmLevel!
 }
@@ -1505,4 +1757,220 @@ type MonitorV2SetRulesResult @goModel(model: "observe/meta/metatypes.MonitorV2Se
 
 input MonitorV2SetRulesResultInput @goModel(model: "observe/meta/metatypes.MonitorV2SetRulesResultInput") {
     links: [MonitorV2MuteLinkInput!]!
+}
+
+type MonitorV2SourceEvaluation @goModel(model: "observe/meta/metatypes.MonitorV2SourceEvaluation") {
+    """
+    AnomalyEvaluationMetadata is only populated for anomaly monitors.
+    It contains information about the anomaly detection configuration parameters
+    """
+    anomalyEvaluationMetadata: AnomalyEvaluationMetadata
+
+    """
+    The OPAL query that, once executed, will produce the evaluation data preview.
+    """
+    query: MultiStageQuery!
+}
+
+type AnomalyEvaluationMetadata @goModel(model: "observe/meta/metatypes.AnomalyEvaluationMetadata") {
+    """
+    The computation window (lookback) used for anomaly detection.
+    This is the time range used to compute the baseline average and standard deviation.
+    Only populated for anomaly monitors.
+    """
+    computationWindow: Duration!
+}
+
+"""
+ActionRelationInput maps the action's relationship to the destinations the user desires to link with.
+"""
+input ActionRelationInput @goModel(model: "observe/meta/metatypes.ActionRelationInput") {
+    actionRule: MonitorV2ActionRuleInput!
+}
+
+type TemplateDictionary @goModel(model: "observe/meta/metatypes.TemplateDictionary") {
+    dictionary: JsonObject!
+}
+
+type RenderedTemplate @goModel(model: "observe/meta/metatypes.RenderedTemplate") {
+    email: RenderedEmail
+    webhook: RenderedWebhook
+}
+
+type RenderedEmail @goModel(model: "observe/meta/metatypes.RenderedEmail") {
+    action: MonitorV2EmailAction!
+}
+
+type RenderedWebhook @goModel(model: "observe/meta/metatypes.RenderedWebhook") {
+    action: MonitorV2WebhookAction!
+}
+
+type MonitorV2AlarmSearchResult @goModel(model: "observe/meta/metatypes.MonitorV2AlarmSearchResult") {
+    results: [MonitorV2Alarm!]!
+}
+
+"""
+MonitorV2AlarmStatus represents the current status of an alarm.
+- Active: The alarm is currently triggering
+- Ended: The alarm has ended normally
+- Retracted: The alarm was invalidated (false positive due to late-arriving data)
+"""
+enum MonitorV2AlarmStatus @goModel(model: "observe/meta/metatypes.MonitorV2AlarmStatus") {
+    Active
+    Ended
+    Retracted
+}
+
+"""
+MonitorV2AlarmCountByMonitor represents the count of alarms for a specific monitor.
+"""
+type MonitorV2AlarmCountByMonitor @goModel(model: "observe/meta/metatypes.MonitorV2AlarmCountByMonitor") {
+    monitorId: ObjectId!
+    count: Int64!
+}
+
+"""
+MonitorV2AlarmCountByStatus represents the count of alarms for a specific status.
+"""
+type MonitorV2AlarmCountByStatus @goModel(model: "observe/meta/metatypes.MonitorV2AlarmCountByStatus") {
+    status: MonitorV2AlarmStatus!
+    count: Int64!
+}
+
+"""
+MonitorV2AlarmCountByLevel represents the count of alarms for a specific severity level.
+"""
+type MonitorV2AlarmCountByLevel @goModel(model: "observe/meta/metatypes.MonitorV2AlarmCountByLevel") {
+    level: MonitorV2AlarmLevel!
+    count: Int64!
+}
+
+"""
+MonitorV2AlarmCountByMuted represents the count of alarms by their muted status.
+"""
+type MonitorV2AlarmCountByMuted @goModel(model: "observe/meta/metatypes.MonitorV2AlarmCountByMuted") {
+    isMuted: Boolean!
+    count: Int64!
+}
+
+"""
+MonitorV2AlarmCountsResult contains the alarm counts grouped by various facets.
+"""
+type MonitorV2AlarmCountsResult @goModel(model: "observe/meta/metatypes.MonitorV2AlarmCountsResult") {
+    """
+    Alarm counts grouped by monitor.
+    """
+    byMonitor: [MonitorV2AlarmCountByMonitor!]!
+    """
+    Alarm counts grouped by status (Active, Ended, Retracted).
+    """
+    byStatus: [MonitorV2AlarmCountByStatus!]!
+    """
+    Alarm counts grouped by severity level.
+    """
+    byLevel: [MonitorV2AlarmCountByLevel!]!
+    """
+    Alarm counts grouped by muted status.
+    """
+    byMuted: [MonitorV2AlarmCountByMuted!]!
+}
+
+"""
+MonitorV2ActionAndRelationInput allows for defining a relation and an optional action at the same
+time for the saveMonitorV2WithActions function. This emulates what the primitives
+do using MonitorV2ActionInput and MonitorV2ActionRuleInput.
+
+One of `action` or `actionID` is required. The `actionID` references an existing
+action (typically a shared action) or the `action` can be defined and created
+in this input.
+
+The remaining parameters (like `levels` and others) are to bind the
+relationship (see saveMonitorV2Relations) to the monitor.
+"""
+input MonitorV2ActionAndRelationInput @goModel(model: "observe/meta/metatypes.MonitorV2ActionAndRelationInput") {
+    action: MonitorV2ActionInput
+    actionID: ObjectId
+
+    levels: [MonitorV2AlarmLevel!]
+    conditions: MonitorV2ComparisonExpressionInput
+    sendEndNotifications: Boolean
+    sendRemindersInterval: Duration
+}
+
+"""
+MonitorV2GovernorStatusKind describes the cost governor status for a monitor.
+The governor tracks monitor usage against cost limits and can disable monitors
+that exceed their budget.
+"""
+enum MonitorV2GovernorStatusKind @goModel(model: "observe/meta/metatypes.MonitorV2GovernorStatusKind") {
+    """
+    Normal: Usage is within budget or no limit is configured. Monitor runs normally.
+    """
+    Normal
+    """
+    GracePeriod: Monitor is over budget but still running during a countdown period.
+    The gracePeriodRemaining field indicates how much time is left before the monitor
+    will be disabled.
+    """
+    GracePeriod
+    """
+    CostDisabled: Grace period expired and monitor is over budget. Monitor is disabled
+    by the cost governor. The user must re-enable the monitor to restart it.
+    """
+    CostDisabled
+}
+
+"""
+MonitorV2GovernorStatus represents the cost governor status of a monitor.
+"""
+type MonitorV2GovernorStatus @goModel(model: "observe/meta/metatypes.MonitorV2GovernorStatus") {
+    """
+    The current status of the monitor with respect to the cost governor.
+    """
+    status: MonitorV2GovernorStatusKind!
+    """
+    When status is GracePeriod, this indicates how much time remains before the monitor
+    will be disabled. This is null for Normal and CostDisabled states.
+    """
+    gracePeriodRemaining: Duration
+    """
+    Usage context for this monitor's cost over the governor evaluation window.
+    This is computed dynamically by apiserver from persisted governor state and
+    billing usage data. Null means usage could not be determined.
+    """
+    usage: MonitorV2GovernorUsage @goField(forceResolver: true)
+}
+
+"""
+MonitorV2GovernorUsage describes monitor usage cost over a specific time window.
+"""
+type MonitorV2GovernorUsage @goModel(model: "observe/meta/metatypes.MonitorV2GovernorUsage") {
+    """
+    Monitor usage in Observe credits across the usageWindow.
+    """
+    creditsUsed: Float!
+    """
+    Monitor usage normalized as credits per hour over the usageWindow.
+    """
+    creditsPerHour: Float!
+    """
+    The usage window duration used for this usage calculation.
+    """
+    usageWindow: Duration!
+}
+
+type MonitorV2ContextEntry @goModel(model: "observe/meta/metatypes.MonitorV2ContextEntry") {
+    """
+    Column information for the context entry.
+    """
+    column: MonitorV2Column!
+    """
+    Value of this context entry for which the alarm triggered.
+    """
+    value: String!
+}
+
+input MonitorV2ContextEntryInput @goModel(model: "observe/meta/metatypes.MonitorV2ContextEntryInput") {
+    column: MonitorV2ColumnInput!
+    value: String!
 }

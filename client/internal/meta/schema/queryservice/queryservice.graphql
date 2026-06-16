@@ -54,6 +54,8 @@ extend type Query {
     Given a query (such as you'd pass to datasetProgressive() or checkQueries()),
     run the query, and export the results to a cursor, then prepare the export URL for
     that cursor with the same parameters as exportCursor(), and return that URL.
+    Results are limited to a maximum of 100,000 rows. Use the rowCount parameter
+    or presentation.limit to specify a smaller limit.
     """
     exportQuery(query: MultiStageQueryInput!, params: QueryParams!, presentation: StagePresentationInput, rowCount: Int64, filename: String, exportFormat: ExportFileFormat, metadata: QueryMetadata): ExportCursorResult!
 
@@ -776,6 +778,11 @@ type ResultMetadata @goModel(model: "observe/meta/metatypes.ResultMetadata") {
     The number of slices that are answered using results from the result cache
     """
     resultCacheHits: Int
+
+    """
+    Information about the limit applied to the query results by the backend
+    """
+    limit: Int64
 }
 
 """

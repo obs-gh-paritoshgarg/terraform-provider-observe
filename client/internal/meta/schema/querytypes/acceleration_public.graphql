@@ -151,6 +151,13 @@ type AccelerationInfo @goModel(model: "observe/meta/metatypes.AccelerationInfo")
     stalenessSeconds: Float
 
     """
+    A stable, conservative measurement of what staleness the dataset is achieving
+    over the past few hours. A float value in seconds. Empty if alwaysAccelerated
+    is true.
+    """
+    recentStalenessSeconds: Float
+
+    """
     Configured staleness target of the dataset. 2min means the staleness of
     the dataset should not exceed 2mins. May differ from the originally
     configured value of the dataset if Dataset.freshnessDesired is nil, in

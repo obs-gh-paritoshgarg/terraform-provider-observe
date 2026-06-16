@@ -64,7 +64,7 @@ func TestShareJSONMarshaling(t *testing.T) {
 func TestTrackTableRequestMarshaling(t *testing.T) {
 	desc := "Test description"
 	validFrom := "event_timestamp"
-	
+
 	req := TrackTableRequest{
 		TableName:      "CUSTOMER_EVENTS",
 		SchemaName:     "PUBLIC",
@@ -150,4 +150,3 @@ func TestTrackTableResponseMarshaling(t *testing.T) {
 		t.Errorf("Expected Dataset.Kind to be Event, got %s", response.Dataset.Kind)
 	}
 }
-

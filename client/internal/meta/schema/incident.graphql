@@ -4,7 +4,7 @@ extend type Query {
 }
 
 extend type Mutation {
-    createIncident(workspaceId: ObjectId!, input: IncidentInput!): Incident!
+    createIncident(workspaceId: ObjectId, input: IncidentInput!): Incident!
     updateIncident(id: ObjectId!, input: IncidentInput!): Incident!
     deleteIncident(id: ObjectId!): ResultStatus!
 }

@@ -109,14 +109,14 @@ func newDashboardLinkConfig(ctx context.Context, data *schema.ResourceData, clie
 		}
 		//	The Folder specification is scary; the Id is a workspace Id, and
 		//	the Version is the folder Id.
-		input.WorkspaceId = folder.Id
+		input.WorkspaceId = &folder.Id
 	}
-	if input.WorkspaceId == "" {
+	if input.WorkspaceId == nil || *input.WorkspaceId == "" {
 		wsid, err := client.ResolveWorkspaceID(ctx, maybeString(data.GetOk("workspace")))
 		if err != nil {
 			return nil, diag.FromErr(err)
 		}
-		input.WorkspaceId = wsid
+		input.WorkspaceId = &wsid
 	}
 
 	return

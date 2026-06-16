@@ -17,12 +17,12 @@ extend type Query {
     rematerialization. See DryRunDatasetSaveResult for more details.
     """
     getDatasetsAffectedByDatasetUpdate(
-      workspaceId: ObjectId!,
+      workspaceId: ObjectId,
       dataset: DatasetInput!
       query: MultiStageQueryInput
     ): DatasetsAffectedByDatasetUpdateResult
 
-    datasetAndMonitorBillingInfo(workspaceId: ObjectId!, atTime: Time): DatasetAndMonitorBillingInfo!
+    datasetAndMonitorBillingInfo(workspaceId: ObjectId, atTime: Time): DatasetAndMonitorBillingInfo!
 }
 
 extend type Mutation {
@@ -34,7 +34,7 @@ extend type Mutation {
     datasets or errors therein.
     """
     saveDataset(
-        workspaceId: ObjectId!,
+        workspaceId: ObjectId,
         dataset: DatasetInput!,
         query: MultiStageQueryInput,
         logDerivedMetricQuery: LogDerivedMetricDefinitionInput,
@@ -50,13 +50,13 @@ extend type Mutation {
     but ignore downstream datasets or errors therein.
     """
     saveBuiltinDataset(
-        workspaceId: ObjectId!,
+        workspaceId: ObjectId,
         dataset: DatasetInput!,
         dependencyHandling: DependencyHandlingInput,
         transformInput: BuiltinTransformInput,
     ): DatasetSaveResult
 
-    saveSourceDataset(workspaceId: ObjectId!, datasetDefinition: DatasetDefinitionInput!, sourceTable: SourceTableDefinitionInput!, dependencyHandling: DependencyHandlingInput): DatasetSaveResult
+    saveSourceDataset(workspaceId: ObjectId, datasetDefinition: DatasetDefinitionInput!, sourceTable: SourceTableDefinitionInput!, dependencyHandling: DependencyHandlingInput): DatasetSaveResult
 
     updateBoard(id: ObjectId!, board: BoardInput!): Board!
     createBoard(datasetId: ObjectId!, type: BoardType!, board: BoardInput!): Board!
@@ -377,6 +377,25 @@ type Dataset implements WorkspaceObject & FolderObject & AuditedObject & Acceler
     sourceTable: SourceTableDefinition @goField(forceResolver:true)
     pathCost: Int64
     interfaces: [ImplementedInterface!]! @goField(forceResolver:true)
+
+    """
+    The type of data this dataset contains. For Resource datasets, this is
+    determined by the dataset kind. For other kinds, it is derived from the
+    dataset's interface bindings. Returns Unknown if no recognized interface
+    is found. This field is intended to replace the 'interfaces' field over time.
+    """
+    contentType: DatasetContentType! @goField(forceResolver:true)
+
+    """
+    Custom field mappings associated with the dataset's content type. Maps canonical
+    field names to the dataset's actual column names. The exact set of keys depends on
+    the contentType. For example, a Log dataset might have {"log": "message"}, while
+    a Metric dataset might have {"metric": "metric_name", "value": "metric_value"}.
+    Null if the dataset has no recognized content type or if the content type does not
+    use field mappings (e.g. Resource).
+    """
+    customFieldMappings: JsonObject @goField(forceResolver:true)
+
     metrics: [Metric!]! @goField(forceResolver:true)
     boards: [Board!]! @goField(forceResolver:true)
     alignment: TimeAlignment
@@ -391,12 +410,11 @@ type Dataset implements WorkspaceObject & FolderObject & AuditedObject & Acceler
     Optional custom configured override value of the on demand materialization
     range for the dataset.
     """
-    onDemandMaterializationLength: Int64
+    onDemandMaterializationLength: Int64 @deprecated(reason: "use layered setting instead")
 
     defaultDashboardId: ObjectId @goField(forceResolver: true)
     defaultInstanceDashboardId: ObjectId @goField(forceResolver: true)
 
-    accelerable: Boolean!
     accelerationType: AccelerationType!
     accelerationInfo: AccelerationInfo! @goField(forceResolver:true)
     accelerationState: AccelerationState! @goField(forceResolver:true)
@@ -415,11 +433,6 @@ type Dataset implements WorkspaceObject & FolderObject & AuditedObject & Acceler
     hibernatedAt: Time @goField(forceResolver:true)
 
     logDerivedMetricTable: LogDerivedMetricDefinition @goField(forceResolver:true)
-    """
-    Defines the data retention period of the dataset. We will currently only persist this field but
-    it wouldn't take effect. TODO: Also apply it to the data retention manager.
-    """
-    dataRetentionPeriod: Duration
 
     datasetDefinitionType: DatasetDefinitionType
 
@@ -548,20 +561,6 @@ input RelationshipCostAttributes @goModel(model: "observe/meta/metapath.Relation
     extraDatasetCost: [RelationshipDatasetCost!]
 }
 
-type DatasetInputRecord @goModel(model: "observe/meta/metatypes.DatasetInputRecord") {
-    id: ObjectId
-    label: String!
-    description: String
-    source: String
-    overwriteSource: Boolean
-    deleted: Boolean
-    latencyDesired: Int64
-    freshnessDesired: Int64
-    iconUrl: String
-    layout: JsonObject
-    pathCost: Int64
-}
-
 input DatasetInput @goModel(model: "observe/meta/metatypes.DatasetInput") {
     """
     if id is not specified, a new dataset is created
@@ -602,13 +601,18 @@ input DatasetInput @goModel(model: "observe/meta/metatypes.DatasetInput") {
     iconUrl: String
     layout: JsonObject
     pathCost: Int64
+    """
+    Disables freshness decay for this dataset. When true, the dataset's freshness
+    goal will not be automatically increased based on query activity.
+    """
+    freshnessDecayDisabled: Boolean
     dataTableViewState: JsonObject
     storageIntegrationId: ObjectId
     """
     Max on-demand materialization length for the dataset (in nanoseconds). If not set
     will use the default value in transformer config.
     """
-    onDemandMaterializationLength: Int64
+    onDemandMaterializationLength: Int64 @deprecated(reason: "use layered setting instead")
 
     """
     Optional id of the object this dataset is managed by: app, datastream, monitor etc.
@@ -625,11 +629,20 @@ input DatasetInput @goModel(model: "observe/meta/metatypes.DatasetInput") {
     """
     entityTags: [EntityTagMappingInput!]
 
+
     """
-    Defines the data retention period of the dataset. We will currently only persist this field but
-    it wouldn't take effect. TODO: Also apply it to the data retention manager.
+    Defines the data retention of the dataset, in days. This will be applied to this dataset only
+    and it will not affect any upstream or downstream datasets. Notice that using a bigger value than the upstream,
+    means that not the full range is available in case of rematerialization.
+
+    A value of 0 means that data retention is disabled for this dataset.
+
+    For root level datasets, if this value is not set, the dataset will inherit the value from the datastream or
+    customer wide data retention period, which is configured via a layered setting (DataRetention.periodDays).
+    For downstream datasets, if this value is not set, the dataset will inherit the value from the minimum value
+    of all upstream datasets.
     """
-    dataRetentionPeriod: Duration
+    dataRetentionDays: Int64 @goField(omittable: true)
 
     """
     The type of dataset definition. Used to specify special dataset types like log derived metrics.
@@ -870,4 +883,21 @@ input LogDerivedMetricDefinitionInput @goModel(model: "observe/meta/metatypes.Lo
     aggregation: LogDerivedMetricAggregationInput!
     metricTags: [LogMetricTagInput!]!
     interval: Duration
+}
+
+extend type Query {
+    """
+    Preview the OPAL definition for a log-derived metrics dataset without saving it.
+    Returns the generated OPAL query that would be used to create the dataset.
+    """
+    previewLogDerivedMetricsOpal(
+        input: LogDerivedMetricDefinitionInput!
+    ): LogDerivedMetricsOpalPreview!
+}
+
+type LogDerivedMetricsOpalPreview @goModel(model: "observe/meta/metatypes.LogDerivedMetricsOpalPreview") {
+    """
+    The generated OPAL pipeline.
+    """
+    pipeline: String!
 }

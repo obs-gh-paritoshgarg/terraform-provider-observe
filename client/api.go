@@ -113,6 +113,42 @@ func (c *Client) DeleteDataset(ctx context.Context, id string) error {
 	return c.Meta.DeleteDataset(ctx, id)
 }
 
+func (c *Client) SaveLogDerivedMetricDataset(ctx context.Context, wsid string, input *meta.DatasetInput, queryInput *meta.MultiStageQueryInput, ldmInput *meta.LogDerivedMetricDefinitionInput, dependencyHandling *meta.DependencyHandlingInput) (*meta.LogDerivedMetricDataset, error) {
+	if !c.Flags[flagObs2110] {
+		c.obs2110.Lock()
+		defer c.obs2110.Unlock()
+	}
+
+	if c.Config.Source != nil {
+		input.Source = c.Config.Source
+	}
+	if c.Config.ManagingObjectID != nil {
+		input.ManagedById = c.Config.ManagingObjectID
+	}
+
+	return c.Meta.SaveLogDerivedMetricDataset(ctx, wsid, input, queryInput, ldmInput, dependencyHandling)
+}
+
+func (c *Client) SaveLogDerivedMetricDatasetDryRun(ctx context.Context, wsid string, input *meta.DatasetInput, queryInput *meta.MultiStageQueryInput, ldmInput *meta.LogDerivedMetricDefinitionInput) (*meta.DatasetDryRunSaveResult, error) {
+	if !c.Flags[flagObs2110] {
+		c.obs2110.Lock()
+		defer c.obs2110.Unlock()
+	}
+
+	if c.Config.Source != nil {
+		input.Source = c.Config.Source
+	}
+	if c.Config.ManagingObjectID != nil {
+		input.ManagedById = c.Config.ManagingObjectID
+	}
+
+	return c.Meta.SaveLogDerivedMetricDatasetDryRun(ctx, wsid, input, queryInput, ldmInput)
+}
+
+func (c *Client) GetLogDerivedMetricDataset(ctx context.Context, id string) (*meta.LogDerivedMetricDataset, error) {
+	return c.Meta.GetLogDerivedMetricDataset(ctx, id)
+}
+
 // GetDataset returns the source dataset by ID
 func (c *Client) GetSourceDataset(ctx context.Context, id string) (*meta.Dataset, error) {
 	return c.Meta.GetDataset(ctx, id)
@@ -876,7 +912,7 @@ func (c *Client) CreateWorksheet(ctx context.Context, workspaceId string, input 
 		c.obs2110.Lock()
 		defer c.obs2110.Unlock()
 	}
-	input.WorkspaceId = workspaceId
+	input.WorkspaceId = &workspaceId
 	if c.Config.ManagingObjectID != nil {
 		input.ManagedById = c.Config.ManagingObjectID
 	}
@@ -903,7 +939,7 @@ func (c *Client) UpdateWorksheet(ctx context.Context, id string, workspaceId str
 		defer c.obs2110.Unlock()
 	}
 	input.Id = &id
-	input.WorkspaceId = workspaceId
+	input.WorkspaceId = &workspaceId
 
 	if c.Config.ManagingObjectID != nil {
 		input.ManagedById = c.Config.ManagingObjectID

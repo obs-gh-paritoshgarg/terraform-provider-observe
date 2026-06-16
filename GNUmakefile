@@ -6,7 +6,7 @@ VERSION?=$(shell git describe --tags --always)
 TESTARGS?=
 SWEEP?=^tf-\\d{16}
 SWEEP_DIR?=./observe
-OBSERVE_ROOT?=../observe
+OBSERVE_ROOT?=~/observe
 OBSERVE_DOCS_ROOT?=../observe-docs
 
 default: build
@@ -74,13 +74,15 @@ copy-gql-schema:
 
 	# Remove @eol fields and any preceding triple-quoted descriptions from all .graphql files.
 	# The (?<!directive ) excludes the @eol directive definition.
-	find client/internal/meta/schema -name '*.graphql' -print0 | xargs -0 perl -0777 -i -pe 's/(\n +"""\n(.+\n)+? +""")?\n.+(?<!directive )\@eol.*//g'
+	# The (?! +""") prevents the description match from greedily spanning into adjacent
+	# fields when the @eol field is not directly preceded by its own description block.
+	find client/internal/meta/schema -name '*.graphql' -print0 | xargs -0 perl -0777 -i -pe 's/(\n +"""\n(?:(?! +""").+\n)+? +""")?\n.+(?<!directive )\@eol.*//g'
 
 	# Strip out @owner directives from all .graphql files
-	find client/internal/meta/schema -name '*.graphql' -print0 | xargs -0 sed -i '' '/^directive/!s/ @owner([^)]*)//g'
+	find client/internal/meta/schema -name '*.graphql' -print0 | xargs -0 sed -i'' -e '/^directive/!s/ @owner([^)]*)//g'
 
 	# Remove internal comment lines starting with # from all .graphql files
-	find client/internal/meta/schema -name '*.graphql' -print0 | xargs -0 sed -i '' '/^[[:space:]]*#/d'
+	find client/internal/meta/schema -name '*.graphql' -print0 | xargs -0 sed -i'' -e '/^[[:space:]]*#/d'
 
 generate:
 	go generate ./...

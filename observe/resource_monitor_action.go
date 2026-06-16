@@ -139,7 +139,7 @@ func newMonitorActionConfig(data *schema.ResourceData, wsid string) (input *gql.
 	name := data.Get("name").(string)
 	input = &gql.MonitorActionInput{
 		Name:        name,
-		WorkspaceId: wsid,
+		WorkspaceId: &wsid,
 	}
 
 	if v, ok := data.GetOk("icon_url"); ok {

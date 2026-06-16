@@ -15,7 +15,7 @@ func dataSourceWorkspace() *schema.Resource {
 	return &schema.Resource{
 		Description:        descriptions.Get("workspace", "description"),
 		DeprecationMessage: "The observe_workspace data source is no longer needed. Workspace is automatically resolved.",
-		ReadContext:         dataSourceWorkspaceRead,
+		ReadContext:        dataSourceWorkspaceRead,
 
 		Schema: map[string]*schema.Schema{
 			"name": {

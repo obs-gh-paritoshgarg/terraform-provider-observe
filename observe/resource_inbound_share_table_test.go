@@ -16,11 +16,12 @@ import (
 // Tests are skipped unless CI=true (requires manual Snowflake share setup).
 //
 // Environment variables (with defaults):
-//   TEST_INBOUND_SHARE_NAME     - Snowflake share name
-//   TEST_INBOUND_SHARE_PROVIDER - Snowflake provider account
-//   TEST_INBOUND_TABLE_DATA     - Main test table name
-//   TEST_INBOUND_TABLE_REF      - Reference test table name (optional)
-//   TEST_INBOUND_TABLE_TYPES    - Types test table name
+//
+//	TEST_INBOUND_SHARE_NAME     - Snowflake share name
+//	TEST_INBOUND_SHARE_PROVIDER - Snowflake provider account
+//	TEST_INBOUND_TABLE_DATA     - Main test table name
+//	TEST_INBOUND_TABLE_REF      - Reference test table name (optional)
+//	TEST_INBOUND_TABLE_TYPES    - Types test table name
 var (
 	testInboundShareName     = getenv("TEST_INBOUND_SHARE_NAME", "MATTG_SHAREIN_TEST_DATA_SHARE2")
 	testInboundShareProvider = getenv("TEST_INBOUND_SHARE_PROVIDER", "HC83707.OBSERVE_O2_1")
@@ -41,9 +42,10 @@ var (
 //   - Resource cleanup works (untrack table, delete dataset)
 //
 // Test flow:
-//   Step 1: Track TEMP_TEST_DATA table as "Table" kind dataset
-//   Step 2: Update dataset label and add description
-//   Step 3: Automatic cleanup via Terraform destroy
+//
+//	Step 1: Track TEMP_TEST_DATA table as "Table" kind dataset
+//	Step 2: Update dataset label and add description
+//	Step 3: Automatic cleanup via Terraform destroy
 func TestAccObserveInboundShareTable_Basic(t *testing.T) {
 	randomPrefix := acctest.RandomWithPrefix("tf")
 
@@ -287,10 +289,11 @@ func TestAccObserveInboundShareTable_EventDataset(t *testing.T) {
 // to test type conversions.
 //
 // Test flow:
-//   Step 1: Create without field mapping
-//   Step 2: Add field mapping for integer_type (as integer)
-//   Step 3: Update field mapping to treat integer_type as float
-//   Step 4: Remove field mapping
+//
+//	Step 1: Create without field mapping
+//	Step 2: Add field mapping for integer_type (as integer)
+//	Step 3: Update field mapping to treat integer_type as float
+//	Step 4: Remove field mapping
 func TestAccObserveInboundShareTable_FieldMapping(t *testing.T) {
 	randomPrefix := acctest.RandomWithPrefix("tf")
 
@@ -335,7 +338,7 @@ func TestAccObserveInboundShareTable_FieldMapping(t *testing.T) {
 			},
 			// Step 4: Remove integer_type mapping, keep only TIME_TYPE drop
 			{
-				Config: testAccInboundShareTableConfigDropTime(randomPrefix+"-removed"),
+				Config: testAccInboundShareTableConfigDropTime(randomPrefix + "-removed"),
 				Check: resource.ComposeTestCheckFunc(
 					// Verify back to 1 field mapping (just TIME_TYPE drop)
 					resource.TestCheckResourceAttr("observe_inbound_share_table.test", "field_mapping.#", "1"),
@@ -414,9 +417,9 @@ func TestAccObserveInboundShareTable_UpdateAllFields(t *testing.T) {
 //   - tableName: Name of the table in the share (e.g., "TEMP_TEST_DATA")
 //
 // Returns a Terraform configuration string that:
-//   1. Looks up the test share by name + provider
-//   2. Tracks the specified table from the share
-//   3. Creates an Observe dataset with the given configuration
+//  1. Looks up the test share by name + provider
+//  2. Tracks the specified table from the share
+//  3. Creates an Observe dataset with the given configuration
 func testAccInboundShareTableConfig(datasetLabel, datasetKind, description, tableName string) string {
 	config := fmt.Sprintf(`
 # Look up the inbound share by name and provider account
@@ -446,8 +449,6 @@ resource "observe_inbound_share_table" "test" {
 	return config
 }
 
-
-
 // testAccInboundShareTableConfigMultiple generates a config tracking both test tables.
 //
 // This creates two separate resources:
@@ -458,7 +459,7 @@ resource "observe_inbound_share_table" "test" {
 //
 // Parameters:
 //   - labelPrefix: Prefix for dataset labels (e.g., "tf-test")
-//                  Will create datasets named "{prefix}-data" and "{prefix}-ref"
+//     Will create datasets named "{prefix}-data" and "{prefix}-ref"
 //
 // Returns a Terraform configuration that tracks both tables from the same share.
 func testAccInboundShareTableConfigMultiple(labelPrefix string) string {

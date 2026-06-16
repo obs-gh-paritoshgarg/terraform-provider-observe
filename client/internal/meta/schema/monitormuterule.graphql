@@ -73,7 +73,7 @@ input MonitorMuteRuleInput @goModel(model: "observe/meta/metatypes.MonitorMuteRu
     duration: Duration
     filterPerColumn: MonitorMuteRuleFilterPerColumnInput
     filterPerResource: MonitorMuteRuleFilterPerResourceInput
-    workspaceId: ObjectId!
+    workspaceId: ObjectId
     name: String!
     iconUrl: String
     description: String

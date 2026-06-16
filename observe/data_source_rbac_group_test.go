@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	defaultRbacGroupReaderName = "reader"
+	defaultRbacGroupReaderName = "Everyone"
 )
 
 func TestAccObserveSourceRbacGroup(t *testing.T) {
